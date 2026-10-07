@@ -56,7 +56,7 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  const VERSION = '3.1'; // must match APP_VERSION in app.js (checked at startup and by tests)
+  const VERSION = '3.2'; // must match APP_VERSION in app.js (checked at startup and by tests)
   const EPOCH = '1970-01-01T00:00:00.000Z';
   const TOMBSTONE_DAYS = 90;
   const PBKDF2_ITERATIONS = 200000;

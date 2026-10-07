@@ -3,7 +3,7 @@
 A small, installable web app for one job: knowing what to take and when, and whether you already did.
 
 - **Today**: Morning, Afternoon and Evening cards. Tap a med to mark it taken (it stamps the time). Tap again to undo. "Take all" logs the whole slot. Use ‹ to fix a day you forgot to log.
-- **Meds**: add, edit, reorder, pause, delete. Scheduled at any mix of morning, afternoon and evening. Most meds have one dose; a med can instead have a different dose at each time of day, a different dose each weekday, or both. Or as needed (PRN), with an optional daily limit ("up to 2 a day") that Today enforces.
+- **Meds**: grouped by time of day like Today. Add, edit, reorder, pause, delete. Scheduled at any mix of morning, afternoon and evening. Most meds have one dose; a med can instead have a different dose at each time of day, a different dose each weekday, or both. Or as needed (PRN), with an optional daily limit ("up to 2 a day") that Today enforces.
 - **Doses by meal, day and over time**: a med can be 200 mg at breakfast and 600 mg at dinner, or 8 mg on Thursday and Sunday and 6 mg the rest of the week, as one entry. Changing a dose starts on a day you pick; earlier days keep what applied then, and every logged dose keeps the dose it was logged at.
 - **As needed**: log a PRN med whenever you take it, as often as needed, at the time you took it. It's never "due" and never counts as missed.
 - **History**: last 30 days, adherence percent, day streak. Tap a day to open it.

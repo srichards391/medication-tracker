@@ -1,4 +1,4 @@
-/* Meds v3.1
+/* Meds v3.2
  * A single-file, no-build web app. Data lives in localStorage on this device and, if sync is
  * turned on, in an encrypted private GitHub Gist shared by your devices.
  * Sections: storage, date helpers, rendering per tab, medication form, as-needed log,
@@ -11,7 +11,7 @@
 
   // When releasing: bump this, VERSION in sync-core.js, CACHE_VERSION in sw.js, version.json,
   // and every ?v= in index.html and sw.js. tests/dosing.test.js fails if any disagree.
-  const APP_VERSION = '3.1';
+  const APP_VERSION = '3.2';
   const STORE_KEY = 'meds.v2';
   const OLD_STORE_KEY = 'meds.v1'; // left in place after migrating, as a just-in-case copy
   const SYNC_KEY = 'meds.sync';    // token, passphrase, gist id. This device only: never synced or exported.
@@ -327,6 +327,8 @@
   }
 
   // ---------- Meds ----------
+  // Grouped the way Today is: Morning, Afternoon, Evening, then As needed, then Paused.
+  // A med taken at two times of day appears under each, with that time's dose.
   function renderMeds() {
     titleEl.textContent = 'Meds';
     const add = el(`<button class="btn primary">+ Add</button>`);
@@ -340,40 +342,66 @@
       return;
     }
 
-    const card = el(`<div class="card"></div>`);
     const today = todayKey();
-    meds.forEach((m, i) => {
-      const upcoming = (m.schedule || []).find((v) => v.from > today);
-      const row = el(`
-        <div class="list-row ${m.active ? '' : 'inactive'}">
-          <div class="body">
-            <div class="name">${esc(m.name)} ${m.active ? '' : '<span class="pill off">Paused</span>'}</div>
-            <div class="meta">${esc(Core.scheduleSummary(Core.scheduleOn(m, today)))}</div>
-            ${upcoming ? `<div class="meta">From ${esc(friendlyDay(fromDayKey(upcoming.from)))}: ${esc(Core.scheduleSummary(upcoming))}</div>` : ''}
-          </div>
-          <div class="actions">
-            <button class="btn icon" title="Move up" ${i === 0 ? 'disabled' : ''}>↑</button>
-            <button class="btn icon" title="Move down" ${i === meds.length - 1 ? 'disabled' : ''}>↓</button>
-            <button class="btn icon" title="Edit">✎</button>
-          </div>
-        </div>`);
-      const [up, down, edit] = row.querySelectorAll('button');
-      up.onclick = () => move(m.id, -1);
-      down.onclick = () => move(m.id, 1);
-      edit.onclick = () => openMedForm(m);
-      card.appendChild(row);
-    });
-    screen.appendChild(card);
-    screen.appendChild(el(`<div class="note">Order here is the order on Today. Pausing a med keeps its history but hides it from Today.</div>`));
+    const groups = [];
+    for (const slot of SLOTS) {
+      const list = medsFor(slot, today).map(({ med, version }) => ({ med, meta: slotLine(med, version, slot, today) }));
+      groups.push({ title: `${slot.icon} ${slot.title}`, sub: slot.meal, list });
+    }
+    groups.push({ title: '💊 As needed', sub: 'log when you take one', list: Core.prnMeds(state, today).map((med) => ({ med, meta: Core.scheduleSummary(Core.scheduleOn(med, today)) })) });
+    const placed = new Set(groups.flatMap((g) => g.list.map((x) => x.med.id)));
+    const rest = meds.filter((m) => !placed.has(m.id));
+    const paused = rest.filter((m) => !m.active), unscheduled = rest.filter((m) => m.active);
+    if (unscheduled.length) groups.push({ title: 'No schedule today', sub: 'a schedule that starts later, or none', list: unscheduled.map((med) => ({ med, meta: Core.scheduleSummary(Core.scheduleOn(med, today) || (med.schedule || [])[0]) })) });
+    if (paused.length) groups.push({ title: 'Paused', sub: 'kept, but not on Today', list: paused.map((med) => ({ med, meta: Core.scheduleSummary(Core.scheduleOn(med, today) || (med.schedule || [])[0]) })) });
+
+    for (const g of groups) {
+      if (!g.list.length) continue;
+      const card = el(`
+        <section class="card">
+          <div class="card-head"><h2>${g.title} <span class="sub">${esc(g.sub)}</span></h2><span class="count">${g.list.length}</span></div>
+        </section>`);
+      g.list.forEach(({ med: m, meta }, i) => {
+        const upcoming = (m.schedule || []).find((v) => v.from > today);
+        const row = el(`
+          <div class="list-row ${m.active ? '' : 'inactive'}">
+            <div class="body">
+              <div class="name">${esc(m.name)}</div>
+              <div class="meta">${esc(meta)}</div>
+              ${upcoming ? `<div class="meta">From ${esc(friendlyDay(fromDayKey(upcoming.from)))}: ${esc(Core.scheduleSummary(upcoming))}</div>` : ''}
+            </div>
+            <div class="actions">
+              <button class="btn icon" title="Move up" aria-label="Move up" ${i === 0 ? 'disabled' : ''}>↑</button>
+              <button class="btn icon" title="Move down" aria-label="Move down" ${i === g.list.length - 1 ? 'disabled' : ''}>↓</button>
+              <button class="btn icon" title="Edit" aria-label="Edit">✎</button>
+            </div>
+          </div>`);
+        const [up, down, edit] = row.querySelectorAll('button');
+        up.onclick = () => swapOrder(m.id, g.list[i - 1].med.id);
+        down.onclick = () => swapOrder(m.id, g.list[i + 1].med.id);
+        edit.onclick = () => openMedForm(m);
+        card.appendChild(row);
+      });
+      screen.appendChild(card);
+    }
+    screen.appendChild(el(`<div class="note">A med taken at two times of day is listed under each. Arrows change the order within a time of day, and Today follows it. Pausing a med keeps its history but hides it from Today.</div>`));
   }
 
-  function move(id, dir) {
-    const meds = liveMeds();
-    const i = meds.findIndex((m) => m.id === id);
-    const j = i + dir;
-    if (i < 0 || j < 0 || j >= meds.length) return;
-    [meds[i], meds[j]] = [meds[j], meds[i]];
-    meds.forEach((m, idx) => { if (m.order !== idx) { m.order = idx; m.updatedAt = stamp(m.updatedAt); } });
+  // One line for a med under a time-of-day heading: that time's dose, plus where else it's taken.
+  function slotLine(med, version, slot, today) {
+    const dose = Core.variesByDay(version, slot.id) ? Core.slotDoseText(version, slot.id) : Core.doseOn(version, today, slot.id);
+    const others = SLOTS.filter((s) => s.id !== slot.id && version.doses[s.id] != null).map((s) => s.title.toLowerCase());
+    return [dose, others.length ? `also ${others.join(' and ')}` : ''].filter(Boolean).join(' · ');
+  }
+
+  // Swap two meds' places in the overall order (the order Today uses too).
+  function swapOrder(idA, idB) {
+    const a = state.meds.find((m) => m.id === idA), b = state.meds.find((m) => m.id === idB);
+    if (!a || !b) return;
+    // Orders can collide after a merge from two devices; renumber first so a swap is a real swap.
+    liveMeds().forEach((m, idx) => { if (m.order !== idx) { m.order = idx; m.updatedAt = stamp(m.updatedAt); } });
+    [a.order, b.order] = [b.order, a.order];
+    a.updatedAt = stamp(a.updatedAt); b.updatedAt = stamp(b.updatedAt);
     save(); render({ keepScroll: true });
   }
 

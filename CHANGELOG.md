@@ -2,6 +2,9 @@
 
 Point releases add. Whole numbers change something an old edition would notice.
 
+## v3.2 (10/07/2026)
+- **Meds tab grouped by time of day**, the same way Today is: Morning, Afternoon, Evening, As needed, then Paused. A med taken at two times is listed under each with that time's dose ("500 mg · also evening"). Arrows reorder within a time of day and Today follows. Orders that collided after a two-device merge are renumbered on the first move.
+
 ## v3.1 (10/07/2026)
 - **Older copies.** Settings → Sync → Older copies lists every revision of the sync gist (GitHub keeps one per sync), decrypted on the device, with the med names and dose counts in each. Restore merges a chosen copy back in; nothing is deleted. For when a device connected while empty and its copy won, or an installed app was deleted before its data was synced.
 - README: moving the app to a new address (a repo rename) and what to do before deleting an old Home Screen icon.
