@@ -276,3 +276,6 @@ dialog h2 { font-size: 20px; margin-bottom: 14px; }
   border: 1px solid var(--line); border-radius: 10px; background: var(--bg); font-size: 16px;
 }
 .form label small { display: block; font-weight: 400; margin-top: 4px; }
+
+/* v3.1: gist revision list under Sync */
+.rev-list .rev-row .l small { word-break: break-word; }

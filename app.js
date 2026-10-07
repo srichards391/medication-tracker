@@ -1,4 +1,4 @@
-/* Meds v3.0
+/* Meds v3.1
  * A single-file, no-build web app. Data lives in localStorage on this device and, if sync is
  * turned on, in an encrypted private GitHub Gist shared by your devices.
  * Sections: storage, date helpers, rendering per tab, medication form, as-needed log,
@@ -11,7 +11,7 @@
 
   // When releasing: bump this, VERSION in sync-core.js, CACHE_VERSION in sw.js, version.json,
   // and every ?v= in index.html and sw.js. tests/dosing.test.js fails if any disagree.
-  const APP_VERSION = '3.0';
+  const APP_VERSION = '3.1';
   const STORE_KEY = 'meds.v2';
   const OLD_STORE_KEY = 'meds.v1'; // left in place after migrating, as a just-in-case copy
   const SYNC_KEY = 'meds.sync';    // token, passphrase, gist id. This device only: never synced or exported.
@@ -731,6 +731,7 @@
 
     screen.appendChild(sectionTitle('Sync'));
     screen.appendChild(syncCard());
+    if (syncCfg) screen.appendChild(revisionsCard());
 
     // Reminders
     screen.appendChild(sectionTitle('Reminders'));
@@ -876,6 +877,75 @@
     } catch (e) {
       throw new SyncError('passphrase', e.message);
     }
+  }
+
+  // ---------- older copies ----------
+  // Every sync writes a new revision of the gist, and GitHub keeps them all. If a device ever
+  // connected while empty and its copy won, or something was deleted by mistake, the full
+  // copy is still in the gist's history: list the revisions, decrypt each with this device's
+  // passphrase, and merge the one you choose back in. Merging never deletes anything.
+  async function listRevisions() {
+    const cfg = syncCfg;
+    if (!cfg || !cfg.gistId) throw new SyncError('other', 'Connect sync first.');
+    const commits = await gh(`/gists/${cfg.gistId}/commits?per_page=100`);
+    const out = [];
+    for (const c of commits.slice(0, 40)) {
+      const row = { version: c.version, at: c.committed_at, meds: 0, doses: 0, names: [], error: null, data: null };
+      try {
+        const g = await gh(`/gists/${cfg.gistId}/${c.version}`);
+        const f = g.files && g.files[GIST_FILE];
+        if (!f) throw new Error('No sync file in this revision');
+        let text = f.content;
+        if (f.truncated) text = await (await fetch(f.raw_url, { cache: 'no-store' })).text();
+        const data = Core.migrate(await Core.decrypt(JSON.parse(text), cfg.passphrase));
+        const live = data.meds.filter((m) => !m.deleted);
+        row.data = data;
+        row.meds = live.length;
+        row.names = live.map((m) => m.name);
+        row.doses = Object.values(data.logs).filter((v) => v.takenAt).length;
+      } catch (e) {
+        row.error = e instanceof Core.DecryptError ? 'Saved with a different passphrase' : (e.message || 'Could not read');
+      }
+      out.push(row);
+    }
+    return out;
+  }
+
+  function revisionsCard() {
+    const card = el(`
+      <div class="card">
+        <div class="settings-row"><div class="l">Older copies <small>GitHub keeps every sync. If your meds vanished after a device connected while empty, bring a full copy back from here. Restoring merges; nothing is deleted.</small></div>
+          <button class="btn">Look</button></div>
+        <div class="rev-list" hidden></div>
+      </div>`);
+    const btn = card.querySelector('button');
+    const list = card.querySelector('.rev-list');
+    btn.onclick = async () => {
+      btn.disabled = true; btn.textContent = 'Looking';
+      list.hidden = false; list.innerHTML = '<div class="note">Reading the gist\'s history. This can take a minute.</div>';
+      let rows;
+      try { rows = await listRevisions(); }
+      catch (e) { list.innerHTML = `<div class="note">${esc(e.message || 'Could not read the gist history.')}</div>`; btn.disabled = false; btn.textContent = 'Look'; return; }
+      list.innerHTML = '';
+      if (!rows.length) list.appendChild(el('<div class="note">No revisions found.</div>'));
+      for (const r of rows) {
+        const when = new Date(r.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        const what = r.error ? r.error : `${r.meds} med${r.meds === 1 ? '' : 's'}, ${r.doses} dose${r.doses === 1 ? '' : 's'} logged`;
+        const row = el(`
+          <div class="settings-row rev-row">
+            <div class="l">${esc(when)} <small>${esc(what)}${r.names.length ? ' · ' + esc(r.names.join(', ')) : ''}</small></div>
+            <button class="btn" ${r.error || (!r.meds && !r.doses) ? 'disabled' : ''}>Restore</button>
+          </div>`);
+        row.querySelector('button').onclick = () => {
+          if (!confirm(`Merge the copy from ${when} (${what}) into this device? Newer changes win and nothing is deleted.`)) return;
+          state = Core.merge(state, r.data);
+          save(); render(); toast('Restored. Check Today and History.');
+        };
+        list.appendChild(row);
+      }
+      btn.disabled = false; btn.textContent = 'Look again';
+    };
+    return card;
   }
 
   async function syncNow() {

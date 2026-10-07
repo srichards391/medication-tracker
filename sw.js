@@ -4,15 +4,15 @@
 // Updates: bump CACHE_VERSION (and the ?v= below, and APP_VERSION in app.js) whenever app
 // files change. The browser notices this file changed, installs the new worker, and it takes
 // over at once (skipWaiting + claim); app.js then reloads the page onto the new code.
-const CACHE_VERSION = 'meds-v3.0.0';
+const CACHE_VERSION = 'meds-v3.1.0';
 const DATA_CACHE = 'meds-data'; // the app's copy of your meds for reminder text; survives updates
 const SHELL = [
   './',
   './index.html',
-  './styles.css?v=3.0',
-  './config.js?v=3.0',
-  './sync-core.js?v=3.0',
-  './app.js?v=3.0',
+  './styles.css?v=3.1',
+  './config.js?v=3.1',
+  './sync-core.js?v=3.1',
+  './app.js?v=3.1',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -20,7 +20,7 @@ const SHELL = [
 ];
 
 // Same dose logic as the app, for "Warfarin 8 mg" in the reminder.
-importScripts('./sync-core.js?v=3.0');
+importScripts('./sync-core.js?v=3.1');
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

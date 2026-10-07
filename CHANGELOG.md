@@ -2,6 +2,10 @@
 
 Point releases add. Whole numbers change something an old edition would notice.
 
+## v3.1 (10/07/2026)
+- **Older copies.** Settings → Sync → Older copies lists every revision of the sync gist (GitHub keeps one per sync), decrypted on the device, with the med names and dose counts in each. Restore merges a chosen copy back in; nothing is deleted. For when a device connected while empty and its copy won, or an installed app was deleted before its data was synced.
+- README: moving the app to a new address (a repo rename) and what to do before deleting an old Home Screen icon.
+
 ## v3.0 (09/29/2026)
 A whole-number release: a v2.1 device syncing with a v3.0 one never sees an afternoon dose as due. Update both devices.
 - **Afternoon slot.** Today now has Morning, Afternoon and Evening cards. A med can be scheduled in any mix of the three, with its own dose per slot as before. Default afternoon reminder time 2:00 PM (Settings), with its own calendar alert and push reminder (two new cron lines in `push-reminders.yml`, `AFTERNOON_TIME`).

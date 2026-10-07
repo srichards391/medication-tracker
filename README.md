@@ -91,6 +91,10 @@ If Meds ever says "Meds didn't finish updating", close it completely and open it
 
 **Releasing a new version** (for whoever changes the code): bump `APP_VERSION` in `app.js`, `VERSION` in `sync-core.js`, `CACHE_VERSION` and every `?v=` in `sw.js`, every `?v=` in `index.html`, and `version.json`. `node --test` fails if any of them disagree.
 
+## If the app's address changes (a repo rename)
+
+GitHub Pages serves the app at the repo's name, so renaming the repo moves the app. Before you delete an old Home Screen icon: open it, Settings → Backup → Export, and keep the file. On iPhone each Home Screen icon has its own storage; deleting the icon deletes its data. If it's already gone, Settings → Sync → Older copies on the new install lists every revision GitHub kept of the sync gist and can restore one.
+
 ## Backup
 
 Settings → Backup → **Export** downloads everything as JSON. **Import** accepts files from any version. With sync on, Import merges the file in (newer wins, nothing deleted) instead of replacing.
