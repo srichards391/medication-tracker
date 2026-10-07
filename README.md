@@ -29,7 +29,7 @@ No accounts to create, no server to run, no build step. Plain HTML, CSS and Java
 Deploys to GitHub Pages via `.github/workflows/pages.yml` on every push to this branch (the repo's default) or `main`:
 
 ```
-https://srichards391.github.io/household-inventory/
+https://srichards391.github.io/medication-tracker/
 ```
 
 If the first deploy fails with a Pages permissions error, turn on Pages once: repo **Settings → Pages → Source: GitHub Actions**, then re-run the workflow from the **Actions** tab.

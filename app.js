@@ -1078,7 +1078,7 @@
         <div class="settings-row"><div class="l">Push reminders <small>A notification at each reminder time (breakfast, afternoon, dinner), sent by GitHub. Tap it to open Today.</small></div>
           <button class="btn primary" ${supported ? '' : 'disabled'}>Enable</button></div>
         <div class="push-out" hidden>
-          <div class="note">Copy this and paste it into the repo secret <code>PUSH_SUBSCRIPTION</code> (GitHub → household-inventory → Settings → Secrets and variables → Actions).
+          <div class="note">Copy this and paste it into the repo secret <code>PUSH_SUBSCRIPTION</code> (GitHub → medication-tracker → Settings → Secrets and variables → Actions).
             Using push on both iPhone and Mac? Put both in the secret as a list: <code>[</code> first <code>,</code> second <code>]</code>.</div>
           <textarea readonly rows="5" class="code-box"></textarea>
           <div class="card-foot"><button class="btn">Copy</button></div>

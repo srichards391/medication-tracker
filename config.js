@@ -8,6 +8,6 @@
  */
 var MedsConfig = {
   vapidPublicKey: 'BEwwKoecBsjdb5f9QAPzEO2--v-OE7ckMDVbmEzi8YcI-TdFfHv9HJyBnwbFAwfdopFT7ctt5W-LwoLByL3DmM4',
-  pushSubject: 'https://srichards391.github.io/household-inventory/',
+  pushSubject: 'https://srichards391.github.io/medication-tracker/',
 };
 if (typeof module === 'object' && module.exports) module.exports = MedsConfig;
